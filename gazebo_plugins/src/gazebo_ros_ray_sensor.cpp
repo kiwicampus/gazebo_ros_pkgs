@@ -240,7 +240,7 @@ void GazeboRosRaySensorPrivate::PublishRange(ConstLaserScanStampedPtr & _msg)
   auto range_msg = gazebo_ros::Convert<sensor_msgs::msg::Range>(*_msg);
 
   // Apply offset
-  range_msg.range -= range_offset_;
+  range_msg.range += range_offset_;
 
   // Set tf frame
   range_msg.header.frame_id = frame_name_;
