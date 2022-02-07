@@ -73,6 +73,9 @@ public:
   /// Minimum intensity value to publish for laser scan / pointcloud messages
   double min_intensity_{0.0};
 
+  /// Offset to apply in the range field of the sensor_msgs/Range message
+  double range_offset_{0.0};
+
   /// brief Radiation type to report when output type is range
   uint8_t range_radiation_type_;
 
@@ -166,6 +169,13 @@ void GazeboRosRaySensor::Load(gazebo::sensors::SensorPtr _sensor, sdf::ElementPt
     impl_->min_intensity_ = _sdf->Get<double>("min_intensity");
   }
 
+  if (!_sdf->HasElement("range_offset")) {
+    RCLCPP_DEBUG(
+      impl_->ros_node_->get_logger(), "missing <range_offset>, defaults to %f",
+      impl_->range_offset_);
+  } else {
+    impl_->range_offset_ = _sdf->Get<double>("range_offset");
+  }
   // Create gazebo transport node and subscribe to sensor's laser scan
   impl_->gazebo_node_ = boost::make_shared<gazebo::transport::Node>();
   impl_->gazebo_node_->Init(_sensor->WorldName());
@@ -228,6 +238,10 @@ void GazeboRosRaySensorPrivate::PublishRange(ConstLaserScanStampedPtr & _msg)
 {
   // Convert Laser scan to range
   auto range_msg = gazebo_ros::Convert<sensor_msgs::msg::Range>(*_msg);
+
+  // Apply offset
+  range_msg.range -= range_offset_;
+
   // Set tf frame
   range_msg.header.frame_id = frame_name_;
   // Set radiation type from sdf
